@@ -202,6 +202,96 @@ primitives:
       - www-palantir-com-platforms-aip
       - www-palantir-com-docs-foundry
 
+panderose_target_shape:
+  # The five-point posture on which of the primitives above Panderose should
+  # actually adopt, generalized out of Cambium's existing defense-decision
+  # context — proposed 2026-09-25, compared against Cambium's real
+  # architecture (5-layer stack, 9 entity types, bitemporal Postgres,
+  # Fellegi-Sunter entity resolution) and sent to the Cambium "Building"
+  # session for its roadmap. Ranked by priority; each entry names which
+  # primitive(s) above it draws on and what NOT to copy alongside it.
+  priorities:
+  - rank: 1
+    title: Federated semantic layer, not copied data
+    primitives: [semantic_data_layer]
+    posture: >
+      Treat Monday.com, SAM.gov, Clerid outputs, and Cambium's own fact store
+      as registered sources for one object model, rather than separately
+      ingested copies. Everything else in this list depends on this being
+      right first — it's the top architectural priority if the data layer is
+      still being decided.
+    panderose_state: >
+      Locus's ontology/registry.json is the seed of this layer; the gap is
+      federation (querying live sources in place) vs. Locus's current
+      ingest-then-encode model.
+
+  - rank: 2
+    title: Generalize entity resolution out of the defense-decision context
+    primitives: [entity_resolution]
+    posture: >
+      Cambium's blocking -> Fellegi-Sunter -> human-confirm pipeline is a real
+      strength — more specific and auditable than what large ontology vendors
+      disclose publicly. Make it reusable by the shared context server too
+      (e.g. resolving a LinkedIn contact to a CRM row), not just
+      company-to-company matching.
+    panderose_state: >
+      Currently scoped to Cambium's company-matching use case (UEI/CAGE/CIK
+      cross-referencing). Directly relevant to LinkedIn-outreach contact
+      triage per panderose-linkedin-outreach memory.
+
+  - rank: 3
+    title: Registry-based logic and evaluators, not embedded code
+    primitives: [dynamic_logic_layer]
+    posture: >
+      MCDA and the network evaluator should become pluggable, named,
+      independently callable units bound to the entity model — not fixed
+      code — so a second product line can reuse evaluation machinery without
+      forking it.
+    panderose_state: >
+      Cambium's evaluators exist today but are embedded, not registered.
+      Mirrors how Locus's bind()/relate() functions could also be exposed as
+      named, independently invocable units.
+
+  - rank: 4
+    title: Governance stricter than the vendor norm, never diluted to match it
+    primitives: [governance_guardrails]
+    posture: >
+      Cambium's hard rule — no program can ever create a commitment, enforced
+      in the data layer, not a prompt — is a genuine differentiator. As
+      Cambium and the shared context server take on more autonomous behavior
+      (agentic elicitation, LinkedIn triage, GovCon monitoring), this is the
+      standard to hold, not loosen to match vendor models that allow
+      AI-authored actions with after-the-fact approval.
+    panderose_state: >
+      Already stronger than the kinetic_action_layer primitive as Palantir
+      describes it. Explicitly do NOT adopt write-back-to-live-systems or
+      AI-initiated actions with human approval after the fact — see the
+      excluded-by-design note below.
+
+  - rank: 5
+    title: New verticals as configuration, not new builds
+    primitives: [application_layer]
+    posture: >
+      The test for "is the ontology shape right": GovCon bid-playbook
+      capture, LinkedIn contact profiles, and Clerid's domains should
+      eventually become configurations on the same four underlying layers
+      (data, resolution, logic, governance), not four separate systems.
+    panderose_state: >
+      Cambium's own artifact already states this direction ("the bottom four
+      layers can work for any industry... Panderose has not built those
+      industry versions yet") — this formalizes it as the target, not a new
+      idea.
+
+  excluded_by_design:
+    - kinetic_action_layer
+    - feedback_driven_ai_ops  # only as "AI acts"; the logging/correction half is fine to keep
+  excluded_rationale: >
+    Write-back into live operational systems, and AI-initiated actions with
+    after-the-fact human approval, are Palantir primitives Panderose should
+    NOT adopt. Cambium's suggest-only, human-gated-at-the-data-layer stance is
+    intentionally stricter and should stay that way — this is a considered
+    choice, not a gap to close by matching the vendor's looser model.
+
 sources_note: >
   This file is grounded only in the pages recorded in data/raw/manifest.json
   (crawled via scraper/crawl.py) — see that file for URLs and fetch
