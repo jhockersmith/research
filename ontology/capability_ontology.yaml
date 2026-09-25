@@ -1,0 +1,270 @@
+# Palantir capability ontology — generalized, industry-agnostic.
+# See schema.md for field definitions. Every claim below traces to a page in
+# `sources` (or a slug under data/raw/manual/ for hand-extracted material).
+# Generated 2026-09-24 from a crawl of www.palantir.com public pages only —
+# no gated/logged-in docs were used.
+
+primitives:
+
+  - id: semantic_data_layer
+    name: Unified semantic object model over federated data
+    palantir_terms: [Foundry Ontology, Semantic Data Layer, Virtual Tables]
+    generic_pattern: >
+      A single logical model of "the things that matter to the business"
+      (objects, their properties, and the relationships between them) sits on
+      top of many physical data sources (databases, files, streams, sensors,
+      geospatial feeds) without requiring the data to be copied into one place
+      first. Sources stay authoritative; the model is a virtualized view plus
+      an integration/identity-resolution layer over them. New sources register
+      as backing stores for existing object types rather than triggering a new
+      pipeline or schema.
+    depends_on: []
+    panderose_relevance: >
+      This is the direct analogue of what Johnathan called "one giant ontology
+      spanning people, connections, associations, tools, resources,
+      organizations, business info" — see panderose-company memory. Locus's
+      ontology/registry.json (Org, Person, Engagement, Playbook, Artifact,
+      Product) is the seed of this layer already; the gap vs. this primitive is
+      federation (querying live sources in place) vs. Locus's current
+      ingest-then-encode model.
+    evidence:
+      - www-palantir-com-platforms-foundry
+      - www-palantir-com-platforms-aip
+      - www-palantir-com-offerings-energy
+
+  - id: entity_resolution
+    name: Cross-source identity resolution
+    palantir_terms: [Entity Resolution, "customer 360"]
+    generic_pattern: >
+      Records referring to the same real-world entity across disparate,
+      non-joined sources (different customer IDs, spellings, systems) are
+      linked into one canonical record using ML-based matching, producing a
+      single "golden record" other capabilities can build on.
+    depends_on: [semantic_data_layer]
+    panderose_relevance: >
+      Directly relevant to LinkedIn-outreach contact triage (linking a LinkedIn
+      profile to an existing CRM/contact record) — see
+      panderose-linkedin-outreach memory.
+    evidence:
+      - www-palantir-com-offerings-anti-money-laundering
+      - www-palantir-com-platforms-foundry
+
+  - id: dynamic_logic_layer
+    name: Reusable business/ML logic as callable assets bound to the ontology
+    palantir_terms: [Dynamic Logic Layer, AIP Logic, Code Workbook, Python transforms]
+    generic_pattern: >
+      Business rules, ML models, and optimizers are registered as discrete,
+      named, callable units bound to object types in the semantic layer (not
+      buried in one-off scripts). Both humans and AI agents can invoke the same
+      logic asset, and it can be unit-tested/debugged independently of any one
+      workflow that uses it.
+    depends_on: [semantic_data_layer]
+    panderose_relevance: >
+      Maps to how Locus's bind()/relate() functions or Clerid's per-domain
+      pipeline configs could be exposed as named, independently invocable
+      units rather than embedded in one pipeline run.
+    evidence:
+      - www-palantir-com-platforms-aip
+      - www-palantir-com-docs-foundry
+
+  - id: kinetic_action_layer
+    name: Governed write-back from decisions into systems of action
+    palantir_terms: [Kinetic Action Layer, Actions, AIP Automate]
+    generic_pattern: >
+      Decisions made in the semantic/logic layers can synchronize back out to
+      the operational systems that actually run the business (ERPs, scheduling
+      systems, edge devices) — not just read data in. Writes are scoped,
+      auditable, and can require human approval before taking effect ("AI
+      proposes, human/policy disposes").
+    depends_on: [semantic_data_layer, dynamic_logic_layer]
+    panderose_relevance: >
+      Clerid today is read/classify-only (produces reviewable datasets, doesn't
+      write back to source systems). This primitive names the gap if Clerid
+      or the context server later needs to *act* (e.g. auto-file a report,
+      update a CRM field) rather than only surface findings.
+    evidence:
+      - www-palantir-com-platforms-aip
+      - www-palantir-com-offerings-anti-money-laundering
+
+  - id: scenario_simulation
+    name: What-if simulation before committing an action
+    palantir_terms: [AIP Scenarios, "what-if simulation", Digital Twin]
+    generic_pattern: >
+      Before a decision is executed against the kinetic action layer, its
+      downstream impact can be simulated against the current state of the
+      semantic model, and the simulated outcome reviewed by a human. The
+      simulation and the real execution use the same underlying object model,
+      so the simulation isn't a separate toy model that can drift from reality.
+    depends_on: [semantic_data_layer, dynamic_logic_layer, kinetic_action_layer]
+    panderose_relevance: null
+    evidence:
+      - www-palantir-com-platforms-aip
+      - www-palantir-com-offerings-energy
+      - www-palantir-com-offerings-automotive-mobility
+
+  - id: governance_guardrails
+    name: Role/purpose-based access control with full audit trail
+    palantir_terms: [Granular AI Guardrails, "Purpose-Based Access Control (PBAC)", auditing]
+    generic_pattern: >
+      Every read and write — by a human or an AI agent — is scoped by role,
+      data classification, and declared purpose, and every operation is logged
+      for audit. This is what makes the write-back layer (kinetic_action_layer)
+      safe to turn on for AI-initiated actions, not just human-initiated ones.
+    depends_on: [semantic_data_layer]
+    panderose_relevance: >
+      panderose-context-server memory already names a `scope` field on Locus's
+      store (author/scope columns, currently defaulting to fully open between
+      Johnathan and Hayden) as the configurable-but-open hook for this. This
+      primitive is the generalized target if/when scoping ever needs to
+      tighten beyond "everything shared."
+    evidence:
+      - www-palantir-com-platforms-aip
+      - www-palantir-com-offerings-anti-money-laundering
+
+  - id: pipeline_lineage
+    name: Ingestion pipelines with tracked lineage, not opaque ETL
+    palantir_terms: [Pipeline Builder, Data Integration, Process Mining, full data lineage]
+    generic_pattern: >
+      Data enters the semantic layer through pipelines whose transformation
+      steps are visible and whose lineage (which source, which transform,
+      which version) is tracked per record, so any object in the ontology can
+      be traced back to its original source data and the exact logic that
+      produced its current state.
+    depends_on: [semantic_data_layer]
+    panderose_relevance: >
+      Locus's chunking/ingest scripts (scripts/ingest_seed.py, ingest_monday_snapshot.py)
+      are one-off scripts today, not a lineage-tracked pipeline layer — this
+      primitive names what "productionizing ingestion" would mean concretely.
+    evidence:
+      - www-palantir-com-docs-foundry
+      - www-palantir-com-offerings-anti-money-laundering
+
+  - id: tool_factory
+    name: Convert existing data/logic/processes into AI-callable tools
+    palantir_terms: [AIP Tool Factory, "APIs/SDKs", "Ontology SDK (OSDK)"]
+    generic_pattern: >
+      Anything already registered in the semantic and logic layers (an object
+      type, a query, a logic asset) can be exposed as a typed tool an LLM agent
+      can call, without writing new integration code per tool — the tool
+      surface is generated from the ontology rather than hand-built per
+      capability.
+    depends_on: [semantic_data_layer, dynamic_logic_layer]
+    panderose_relevance: >
+      This is exactly the shape of panderose-context-server's MCP tool surface
+      (query/remember/relate/get_entity/list_ontology_types) — Locus already
+      does this pattern at small scale. The generalizable lesson is deriving
+      new tools automatically as the ontology registry grows, instead of
+      hand-writing a new MCP tool per new entity type.
+    evidence:
+      - www-palantir-com-platforms-aip
+
+  - id: vector_semantic_search
+    name: Embeddings/vector management layered on the ontology
+    palantir_terms: [Vector Management, semantic search, RAG]
+    generic_pattern: >
+      Embeddings are generated and managed as a first-class extension of the
+      semantic layer (not a separate disconnected vector store), so semantic/
+      similarity search composes with the structured object model instead of
+      being a parallel, unlinked index.
+    depends_on: [semantic_data_layer]
+    panderose_relevance: >
+      Locus already does something structurally similar but with HDC/VSA
+      (bind/bundle + Hamming distance) instead of dense embeddings — worth
+      naming explicitly as an alternate implementation of the same primitive,
+      since Locus was evaluated on its own merits rather than assumed. See
+      panderose-context-server memory's "no reuse-by-default" principle.
+    evidence:
+      - www-palantir-com-platforms-aip
+
+  - id: feedback_driven_ai_ops
+    name: Closed feedback loop for continuously tuning AI-assisted decisions
+    palantir_terms: [Feedback-Driven AI Ops, AI Ops]
+    generic_pattern: >
+      Every AI-produced output plus the human evaluation/correction of it is
+      captured as data, and used to progressively improve future AI
+      performance on that decision type — this is described as a distinct,
+      named capability rather than left implicit.
+    depends_on: [dynamic_logic_layer, kinetic_action_layer]
+    panderose_relevance: null
+    evidence:
+      - www-palantir-com-platforms-aip
+
+  - id: application_layer
+    name: Low-code/no-code operational apps generated from the ontology
+    palantir_terms: [AIP Application Suite, Workshop, out-of-the-box applications]
+    generic_pattern: >
+      End-user-facing applications (dashboards, review queues, case-management
+      UIs) are built by composing objects/actions already defined in the
+      ontology, rather than each app maintaining its own separate data model.
+    depends_on: [semantic_data_layer, dynamic_logic_layer, kinetic_action_layer]
+    panderose_relevance: null
+    evidence:
+      - www-palantir-com-platforms-aip
+      - www-palantir-com-docs-foundry
+
+sources_note: >
+  This file is grounded only in the pages recorded in data/raw/manifest.json
+  (crawled via scraper/crawl.py) — see that file for URLs and fetch
+  timestamps. Gated Foundry/AIP developer docs (SDK reference, full pipeline
+  authoring guides) were NOT accessed and are NOT reflected here; the
+  docs-foundry page only gave a table of contents, not the underlying content.
+
+industry_applications:
+
+  - industry: financial_services_aml
+    primitives_used: [semantic_data_layer, entity_resolution, dynamic_logic_layer, kinetic_action_layer, governance_guardrails, pipeline_lineage]
+    example: >
+      "Foundry for AML" — entity resolution links customers/counterparties into
+      a "customer 360"; transaction monitoring + sanctions screening run as
+      logic assets; investigations get full lineage back to source systems;
+      claims 90% lower cost, 45x improved true-positive rate on alerts (source
+      claims, not independently verified).
+    evidence: www-palantir-com-offerings-anti-money-laundering
+
+  - industry: healthcare_hospital_operations
+    primitives_used: [semantic_data_layer, kinetic_action_layer, scenario_simulation]
+    example: >
+      Cleveland Clinic's Virtual Command Center — same ontology-plus-action
+      pattern applied to bed assignment/discharge management instead of
+      transactions; Tampa General's Sepsis Hub uses the same real-time-alerting
+      shape (semantic layer + kinetic action) to flag vital-sign changes early.
+    evidence: www-palantir-com-platforms-foundry
+
+  - industry: energy_oil_gas
+    primitives_used: [semantic_data_layer, scenario_simulation, dynamic_logic_layer]
+    example: >
+      APA/Apache — production value chain (wells to topside facility)
+      represented as ontology objects; physics-based models run hourly and are
+      compared against live sensor data (this is scenario_simulation +
+      dynamic_logic_layer applied to physical equipment instead of financial
+      transactions).
+    evidence: www-palantir-com-offerings-energy
+
+  - industry: automotive_manufacturing
+    primitives_used: [semantic_data_layer, scenario_simulation, kinetic_action_layer]
+    example: >
+      "Plant Digital Twin" and "Component Performance Monitor" — the digital
+      twin is the same scenario_simulation primitive applied to a factory
+      instead of a supply chain; Tritium's "Part Shortage Simulator" is the
+      identical pattern applied to parts supply.
+    evidence: www-palantir-com-offerings-automotive-mobility
+
+  - industry: supply_chain_logistics
+    primitives_used: [semantic_data_layer, pipeline_lineage, scenario_simulation]
+    example: >
+      World Food Programme — near-real-time shipment tracking across 173
+      countries; NHS COVID vaccine distribution — described explicitly as "a
+      single source of truth," which is the semantic_data_layer primitive
+      applied to public-sector logistics rather than commercial supply chains.
+    evidence: www-palantir-com-offerings-supply-chain
+
+meta:
+  generalization_thesis: >
+    Across every industry page crawled, the same ~10 primitives recur under
+    different product/feature names — the industry-specific "offerings" pages
+    are almost entirely re-skinning of semantic_data_layer +
+    scenario_simulation + kinetic_action_layer with different object types
+    (transactions vs. patients vs. wells vs. vehicles vs. shipments). This
+    confirms the premise behind this research: Palantir's cross-industry reach
+    comes from a small, reused architecture, not from N separate vertical
+    products.

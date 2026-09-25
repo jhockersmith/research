@@ -1,0 +1,15 @@
+__pycache__/
+*.pyc
+scratch_*.html
+*.log
+
+# Raw scraped Palantir documentation text and images — kept local-only.
+# Not pushed: bulk verbatim copies of another company's copyrighted docs
+# don't belong redistributed via a hosted git remote, private or not. See
+# README's "Images are intentionally not in this repo" section — same
+# reasoning applies to the text mirror.
+data/docs/
+data/raw/
+data/docs_assets/
+data/*_manifest.json
+data/docs_frontier.json
